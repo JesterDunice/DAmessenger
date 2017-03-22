@@ -18,11 +18,10 @@ import {
   Alert
 } from 'react-native';
 
-import Firebase from 'firebase';
+import firebase from 'firebase';
 import TopBar from '../components/topBar';
 import Button from '../components/button';
 import ListMessage from '../components/ListMessage';
-
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -32,9 +31,10 @@ const firebaseConfig = {
   storageBucket: "",
 };
 
-//const firebaseApp = firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 
 //var GiftedMessenger = require('react-native-gifted-messenger');
+
 
 if (Platform.OS == 'ios') {
   var STATUS_BAR_HEIGHT = 0;
@@ -53,7 +53,7 @@ export default class MessengerContainer extends Component {
   constructor(props) {
     super(props);
 
-    this._messagesRef = new Firebase("https://damessenger-315bf.firebaseio.com/messages");//.limitToLast(20);
+    this._messagesRef = firebase.database().ref("messages");//new Firebase("https://damessenger-315bf.firebaseio.com/messages");//.limitToLast(20);
     this._messages = [];
 
     this.state = {
@@ -62,8 +62,7 @@ export default class MessengerContainer extends Component {
         rowHasChanged: (row1, row2) => row1 !== row2,
       }),
       //this.itemsRef = this.getRef().child('items')
-      messages: this._messages,
-      typingMessage: ''
+      typingMessage: '',
     };
   }
 
@@ -79,12 +78,12 @@ export default class MessengerContainer extends Component {
           image: {uri: child.val().avatarUrl || 'https://facebook.github.io/react/img/logo_og.png'},
           position: child.val().name == UserName && 'right' || 'left',
           date: new Date(child.val().date),
-          uniqueId: child.key()
+          uniqueId: child.key
         });
       });
 
       this.setState({
-        dataSource: this.state.dataSource.cloneWithRows(messages)
+        dataSource: this.state.dataSource.cloneWithRows(messages),
       });
 
     });
@@ -109,14 +108,14 @@ export default class MessengerContainer extends Component {
       avatarUrl: AvatarUrl,
       date: new Date().getTime()
     });
-    this.setState({typingMessage: '', buttonDisabled: true})
+    this.setState({typingMessage: '', buttonDisabled: true});
   }
 
   handleReceive(message = {}) {
     this.setMessages(this._messages.concat(message));
   }
 
-  _onBackPress(){
+  _onBackPress() {
     this.props.navigator.pop();
   }
 
@@ -128,10 +127,10 @@ export default class MessengerContainer extends Component {
       borderRadius: 20,
       padding: 10,
       marginTop: 10,
-      backgroundColor: this.state.buttonDisabled ? '#ababab' :'#66aa33',
+      backgroundColor: this.state.buttonDisabled ? '#ababab' : '#66aa33',
       alignSelf: 'flex-end',
       //underlayColor: '#448833',
-      borderColor: this.state.buttonDisabled ? '#ababab' :'#66aa33',
+      borderColor: this.state.buttonDisabled ? '#ababab' : '#66aa33',
       height: 40,
       width: 60,
       marginBottom: 5,
@@ -142,8 +141,8 @@ export default class MessengerContainer extends Component {
     }
   }
 
-  _buttonDisabled(text){
-    if (text.length == 0){
+  _buttonDisabled(text) {
+    if (text.length == 0) {
       this.setState({typingMessage: text, buttonDisabled: true})
     } else {
       this.setState({typingMessage: text, buttonDisabled: false})
@@ -152,40 +151,28 @@ export default class MessengerContainer extends Component {
 
   render() {
     return (
-      // <View style={{marginTop: CONTAINER_MARGIN}}>
-      // <GiftedMessenger
-      //     styles={{
-      //       bubbleRight: {
-      //         marginLeft: 70,
-      //         backgroundColor: '#007aff',
-      //       },
-      //     }}
-      //     messages={this.state.messages}
-      //     handleSend={this.handleSend.bind(this)}
-      //     maxHeight={Dimensions.get('window').height - STATUS_BAR_HEIGHT - CONTAINER_MARGIN}
-      //   />
-      // </View>
       <View style={{flex: 1, backgroundColor: '#ffffff'}}>
         <View style={{height: 60}}>
-        <TopBar
-          onBackPress={this._onBackPress.bind(this)}
-          title={'Venue'}
-        />
+          <TopBar
+            onBackPress={this._onBackPress.bind(this)}
+            title={'Venue'}
+          />
         </View>
+        <View style={styles.listviewContainer}>
+          <ListView
 
-        <ListView
+            ref={ref => this.scrollView = ref}
+            onContentSizeChange={(contentWidth, contentHeight)=>{this.scrollView.scrollToEnd({animated: true});}}
 
-          ref={ref => this.scrollView = ref}
-          onContentSizeChange={(contentWidth, contentHeight)=>{this.scrollView.scrollToEnd({animated: true});}}
+            //ref={ref => this.listView = ref}
+            //onLayout={event => {this.listViewHeight = event.nativeEvent.layout.height}}
+            //onContentSizeChange={() => {   this.listView.scrollTo({y: this.listView.getMetrics().contentLength - this.listViewHeight}) }}
 
-          //ref={ref => this.listView = ref}
-          //onLayout={event => {this.listViewHeight = event.nativeEvent.layout.height}}
-          //onContentSizeChange={() => {   this.listView.scrollTo({y: this.listView.getMetrics().contentLength - this.listViewHeight}) }}
-
-          dataSource={this.state.dataSource}
-          renderRow={this._renderItem.bind(this)}
-          enableEmptySections={true}
-          style={styles.listview}/>
+            dataSource={this.state.dataSource}
+            renderRow={this._renderItem.bind(this)}
+            enableEmptySections={true}
+            style={styles.listview}/>
+        </View>
 
         <View style={styles.inputContainer}>
 
@@ -211,22 +198,31 @@ export default class MessengerContainer extends Component {
   }
 
   _renderItem(message) {
-    //console.log('--->', message.val().text)
+    console.log(message.date);
 
-    const onPress = () => {
-      Alert.alert(
-         'Complete',
-        null,
-        [
-          {text: 'Complete', onPress: (text) => this._messagesRef.child(message).remove()},
-          {text: 'Cancel', onPress: (text) => console.log('Cancelled')}
-        ]
-      );
-    };
+    // if (prevDate > 0){
+    //   if ((message.date - prevDate) > (1000 * 60 * 5)){
+    //     prevDate = message.date;
+    //     dateRender = true;
+    //   } else dateRender = false;
+    // } else prevDate = message.date;
+
+
+    // const onPress = () => {
+    // Alert.alert(
+    // 'Delete message?',
+    // null,
+    // [
+    // {text: 'Delete', onPress: (text) => this._messagesRef.child(message.uniqueId).remove()},
+    // {text: 'Cancel', onPress: (text) => console.log('Cancelled')}
+    // ]
+    // );
+    // };
 
     return (
       <ListMessage msg={message}
-                   onPress={onPress} />
+        // onPress={onPress}
+      />
     );
   }
 
@@ -239,7 +235,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: 50,
   },
-  listview:{
+
+  listviewContainer: {
+    flex: 1,
     //transform: [{ scaleY: -1 }]
 
   },
@@ -248,7 +246,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#f7f7f7'
   },
-  inputText:{
+  inputText: {
     flex: 1,
     alignSelf: 'stretch',
     marginVertical: 5,

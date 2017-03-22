@@ -106,12 +106,24 @@ export default class ListMessage extends Component {
        </View>
      );
    }
+ }
 
+ _onPress(){
+   const onPress = () => {
+     Alert.alert(
+       'Delete message?',
+       null,
+       [
+         {text: 'Delete', onPress: (text) => this._messagesRef.child(message.uniqueId).remove()},
+         {text: 'Cancel', onPress: (text) => console.log('Cancelled')}
+       ]
+     );
+   };
  }
 
   render() {
     return (
-      <TouchableHighlight onPress={this.props.onPress}>
+     // <TouchableHighlight onPress={this.props.onPress}>
         <View style={styles.messageContainer}>
 
 
@@ -133,7 +145,7 @@ export default class ListMessage extends Component {
 
           </View>
         </View>
-      </TouchableHighlight>
+      //</TouchableHighlight>
     );
 
   }
@@ -143,8 +155,9 @@ const styles = StyleSheet.create({
   messageContainer:{
     flex: 1,
     marginHorizontal: 20,
-    marginTop: 10
+    marginTop: 10,
     //alignSelf: 'center'
+    //transform: [{ scaleY: -1 }]
   },
   dateContainer:{
     flex: 1,
