@@ -18,7 +18,7 @@ import {
   Alert
 } from 'react-native';
 
-import firebase from 'firebase';
+import * as firebase from 'firebase';
 import TopBar from '../components/topBar';
 import Button from '../components/button';
 import ListMessage from '../components/ListMessage';
@@ -28,42 +28,75 @@ const firebaseConfig = {
   apiKey: "AIzaSyDXC-et6TPoJf9PK-3cJQKqoj3m_X7RhDw",
   authDomain: "damessenger-315bf.firebaseapp.com",
   databaseURL: "https://damessenger-315bf.firebaseio.com",
-  storageBucket: "",
+  storageBucket: "gs://damessenger-315bf.appspot.com",
 };
 
 firebase.initializeApp(firebaseConfig);
 
 //var GiftedMessenger = require('react-native-gifted-messenger');
 
+//const user = firebase.auth().currentUser;
+//console.log(user);
 
-if (Platform.OS == 'ios') {
-  var STATUS_BAR_HEIGHT = 0;
-  var CONTAINER_MARGIN = 20;
-  var UserName = 'ios';
-  var AvatarUrl = 'https://source.unsplash.com/sseiVD2XsOk/100x100';
-} else {
-  var STATUS_BAR_HEIGHT = 27;
-  var CONTAINER_MARGIN = 0;
-  var UserName = 'android';
-  var AvatarUrl = 'https://source.unsplash.com/2Ts5HnA67k8/100x100';
-}
+//if (Platform.OS == 'ios') {
+// if (user != null) {
+//   var STATUS_BAR_HEIGHT = 0;
+//   var CONTAINER_MARGIN = 20;
+//   var this.state.userName = 'ios';
+//   var AvatarUrl = 'https://source.unsplash.com/sseiVD2XsOk/100x100';
+// } else {
+//   var STATUS_BAR_HEIGHT = 27;
+//   var CONTAINER_MARGIN = 0;
+//   var this.state.userName = 'android';
+//   var AvatarUrl = 'https://source.unsplash.com/2Ts5HnA67k8/100x100';
+// }
+
 
 export default class MessengerContainer extends Component {
 
   constructor(props) {
     super(props);
+    this.ava = this._initialAva;
+    this._messagesRef = firebase.database().ref("messages2");
+    this._storageRef = firebase.storage().ref();
 
-    this._messagesRef = firebase.database().ref("messages");//new Firebase("https://damessenger-315bf.firebaseio.com/messages");//.limitToLast(20);
+
     this._messages = [];
+    this.user = firebase.auth().currentUser;
 
     this.state = {
+      user: this.user,
+      userName: this.user.displayName,
+      avatar: this.user.photoURL,
       buttonDisabled: true,
       dataSource: new ListView.DataSource({
         rowHasChanged: (row1, row2) => row1 !== row2,
       }),
-      //this.itemsRef = this.getRef().child('items')
       typingMessage: '',
+      AvatarUrl: '',
     };
+
+  }
+
+  _initialAva(){
+    let str = '';
+
+    this._avatarDefault.getDownloadUrl().then((res)=>{
+      console.log('errrr---->>>',res)
+    });
+
+
+    // this._avatarDefault.getMetadata().then(function(metadata) {
+    //   // Metadata now contains the metadata for 'images/forest.jpg'
+    //   console.log(metadata.downloadURLs[0]);
+    //   str = metadata.downloadURLs[0];
+    //
+    //   console.log("------>", str);
+    // }).catch(function(error) {
+    //   // Uh-oh, an error occurred!
+    // });
+
+    return str;
   }
 
   listenForItems(itemsRef) {
@@ -75,8 +108,8 @@ export default class MessengerContainer extends Component {
         messages.push({
           text: child.val().text,
           name: child.val().name,
-          image: {uri: child.val().avatarUrl || 'https://facebook.github.io/react/img/logo_og.png'},
-          position: child.val().name == UserName && 'right' || 'left',
+          image: {uri: child.val().avatarUrl || this.state.AvatarUrl},
+          position: child.val().name == this.state.userName && 'right' || 'left',
           date: new Date(child.val().date),
           uniqueId: child.key
         });
@@ -90,7 +123,37 @@ export default class MessengerContainer extends Component {
   }
 
   componentDidMount() {
+
+    // this._initialAva();
+
+    this._storageRef.child('avatars/default/avatar-default.png').getDownloadURL().then((res)=>{
+      console.log('123123',res);
+      this.setState({AvatarUrl: res});
+      console.log('----->', this.state.AvatarUrl);
+    });
+
     this.listenForItems(this._messagesRef);
+   // console.log('------>>>>', this._avatarDefault);
+      // .child('avatars/default/avatar-default.png'))
+    //
+    // this._avatarDefault.getDownloadUrl().then((err,res)=>{
+    //   console.log('errrr---->>>',err,res)
+    // });
+    //
+
+    // var user = firebase.auth().currentUser;
+    // if (user != null) {
+    //    console.log("User UID: "+this.user.uid);
+    //    console.log("User Name: "+this.user.displayName);
+    //    console.log("User pURL: "+this.user.photoURL);
+    //   user.providerData.forEach(function (profile) {
+    //     console.log("Sign-in provider: "+profile.providerId);
+    //     console.log("  Provider-specific UID: "+profile.uid);
+    //     console.log("  Name: "+profile.displayName);
+    //     console.log("  Email: "+profile.email);
+    //     console.log("  Photo URL: "+profile.photoURL);
+    //   });
+    // }
   }
 
   setMessages(messages) {
@@ -104,11 +167,12 @@ export default class MessengerContainer extends Component {
   handleSend() {
     this._messagesRef.push({
       text: this.state.typingMessage,
-      name: UserName,
-      avatarUrl: AvatarUrl,
+      name: this.state.userName,
+      avatarUrl: this.state.avatar,
       date: new Date().getTime()
     });
     this.setState({typingMessage: '', buttonDisabled: true});
+
   }
 
   handleReceive(message = {}) {
@@ -198,7 +262,7 @@ export default class MessengerContainer extends Component {
   }
 
   _renderItem(message) {
-    console.log(message.date);
+    //console.log(message.date);
 
     // if (prevDate > 0){
     //   if ((message.date - prevDate) > (1000 * 60 * 5)){
@@ -220,7 +284,8 @@ export default class MessengerContainer extends Component {
     // };
 
     return (
-      <ListMessage msg={message}
+      <ListMessage msg = {message}
+                   userName = {this.state.userName}
         // onPress={onPress}
       />
     );
