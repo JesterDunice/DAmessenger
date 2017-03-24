@@ -62,7 +62,7 @@ export default class ListMessage extends Component {
     return {
       color: this.state.message.name == this.props.userName ? '#fff' : '#000',
       fontSize: 18,
-      textAlign: 'center'// this.state.message.name == this.props.userName ? 'right' : 'left',
+      textAlign: 'center'
     }
   }
 

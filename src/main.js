@@ -21,6 +21,7 @@ import Login from './pages/login';
 // import Members from './pages/members';
 // import SwitchLogin from './pages/switchLogin';
  import SignUp from './pages/signUp';
+import SetAvatar from './pages/setAvatar';
 
 
 // Initialize Firebase
@@ -49,7 +50,8 @@ var ROUTES = {
   // members: Members,
   // switchlogin: SwitchLogin,
   signup: SignUp,
-  mesContainer: MessengerContainer
+  mesContainer: MessengerContainer,
+  setAvatar: SetAvatar,
 };
 
 export default class Main extends Component {
@@ -90,7 +92,7 @@ export default class Main extends Component {
   render() {
     return (
       <Navigator
-        initialRoute={{name: 'signup'}}
+        initialRoute={{name: 'setAvatar'}}
         renderScene={this._renderScene}
         configureScene={() => {return Navigator.SceneConfigs.FloatFromRight;}}
         style={styles.container}

@@ -37,77 +37,32 @@ const firebaseConfig = {
 export default class SignUp extends Component {
   constructor(props) {
     super(props);
+
+    this._storageRef = firebase.storage().ref();
+
     this.state = {
       userNickname: '',
       userEmail: '',
       password: '',
       passwordConfirm: '',
       registerLabel: 'Register',
-      errorMessage: '',
-      response: ''
+      response: '',
+      defaultAvatar: '',
     };
+
     this._onPressRegister = this._onPressRegister.bind(this);
     this._alreadySignUp = this._alreadySignUp.bind(this);
   }
 
-  async signup() {
-
-    //DismissKeyboard();
-
-    try {
-      await firebase.auth().createUserWithEmailAndPassword(this.state.userEmail, this.state.password);
-
-      this.setState({
-        response: "account created"
-      });
-
-      let user = firebase.auth().currentUser;
-
-      user.updateProfile({
-        displayName: this.state.userNickname,
-        //photoURL: "https://facebook.github.io/react/img/logo_og.png"
-      });
-
-      setTimeout(() => {
-        this.props.navigator.push({
-          name: "mesContainer"
-        })
-      }, 1500);
-
-    } catch (error) {
-      this.setState({
-        response: error.toString()
-      })
-    }
-
+  componentDidMount(){
+    this._storageRef.child('avatars/default/avatar-default.png').getDownloadURL().then((res)=>{
+      this.setState({defaultAvatar: res});
+    });
   }
 
-  async login() {
-
-    DismissKeyboard();
-
-    try {
-      await firebase.auth().signInWithEmailAndPassword('Ast@freedom.com','Vavilon');//this.state.userEmail, this.state.password);
-
-      this.setState({
-        response: "Logged In!"
-      });
-
-      setTimeout(() => {
-        this.props.navigator.push({
-          name: "mesContainer"
-        })
-      }, 1500);
-
-    } catch (error) {
-      this.setState({
-        response: error.toString()
-      })
-    }
-
-  }
 
   _onPressRegister() {
+
     Keyboard.dismiss();
 
     if (this.state.userNickname.trim().length == 0 || this.state.userEmail.trim().length == 0 || this.state.password.trim().length == 0 || this.state.passwordConfirm.trim().length == 0) {
@@ -116,7 +71,7 @@ export default class SignUp extends Component {
         userEmail: '',
         password: '',
         passwordConfirm: '',
-        errorMessage: 'Value is required and can\'t be empty'
+        response: 'Value is required and can\'t be empty'
       });
       return;
     }
@@ -127,89 +82,78 @@ export default class SignUp extends Component {
         userEmail: '',
         password: '',
         passwordConfirm: '',
-        errorMessage: 'Passwords don\'t match'
+        response: 'Passwords don\'t match'
       });
       return;
     }
 
-    let regExp = /[\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi
+    let regExp = /[\s\{\}\[\]\/?.,;:|\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi
     if (regExp.test(this.state.userNickname) || regExp.test(this.state.password) || regExp.test(this.state.passwordConfirm)) {
       this.setState({
         userNickname: '',
         userEmail: '',
         password: '',
         passwordConfirm: '',
-        errorMessage: 'Please use only alphanumeric characters.'
+        response: 'Please use only alphanumeric characters without spaces.'
       });
       return;
     }
 
-    let regExpMail = /[\{\}\[\]\/?,;:|\)*~`!^\+<>\#$%&\\\=\(\'\"]/gi
+    let regExpMail = /[\s\{\}\[\]\/?,;:|\)*~`!^\+<>\#$%&\\\=\(\'\"]/gi
     if (regExpMail.test(this.state.userEmail)) {
       this.setState({
         userNickname: '',
         userEmail: '',
         password: '',
         passwordConfirm: '',
-        errorMessage: 'Please use only alphanumeric characters.'
+        response: 'Please use only alphanumeric characters without spaces.'
       });
       return;
     }
 
-    sb = SendBird.getInstance();
-    var _SELF = this;
-    sb.connect(_SELF.state.userNickname, function (user, error) {
-      if (error) {
-        _SELF.setState({
-          userNickname: '',
-          userEmail: '',
-          password: '',
-          passwordConfirm: '',
-          errorMessage: 'Register Error'
-        });
-        console.log(error);
-        return;
-      }
+    this.signup();
+  }
 
-      if (Platform.OS === 'ios') {
-        if (sb.getPendingAPNSToken()){
-          sb.registerAPNSPushTokenForCurrentUser(sb.getPendingAPNSToken(), function(result, error){
-            console.log("APNS TOKEN REGISTER AFTER LOGIN");
-            console.log(result);
-          });
-        }
-      } else {
-        if (sb.getPendingGCMToken()){
-          sb.registerGCMPushTokenForCurrentUser(sb.getPendingGCMToken(), function(result, error){
-            console.log("GCM TOKEN REGISTER AFTER LOGIN");
-            console.log(result);
-          });
-        }
-      }
+  async signup() {
+    try {
+      await firebase.auth().createUserWithEmailAndPassword(this.state.userEmail, this.state.password);
 
-      sb.updateCurrentUserInfo(_SELF.state.username, '', function(response, error) {
-        _SELF.setState({
-          buttonDisabled: false,
-          connectLabel: 'DISCONNECT',
-          errorMessage: ''
-        });
+      this.setState({
+        response: "account created"
       });
-    });
+
+      let user = firebase.auth().currentUser;
+      let userId = user.uid;
+      let imageUrl = user.photoURL;
+
+
+
+      firebase.database().ref('users/' + userId).set({
+        name: this.state.userNickname,
+        uid: userId,
+        profile_picture: this.state.defaultAvatar,
+      });
+
+      user.updateProfile({
+        displayName: this.state.userNickname,
+        photoURL: this.state.defaultAvatar,
+      });
+
+      setTimeout(() => {
+        this.props.navigator.push({
+          name: "mesContainer"
+        })
+      }, 1500);
+
+    } catch (error) {
+      this.setState({
+        response: error.toString()
+      })
+    }
   }
 
   _alreadySignUp(){
     this.props.navigator.push({name: 'login'})
-  }
-
-  _onPressDisconnect() {
-    sb.disconnect();
-    this.setState({
-      userId: '',
-      username: '',
-      errorMessage: '',
-      buttonDisabled: true,
-      connectLabel: 'CONNECT'
-    });
   }
 
   _onBackPress() {
@@ -278,10 +222,10 @@ export default class SignUp extends Component {
           <Button
             text={this.state.registerLabel}
             style={this._buttonStyle()}
-            onPress={this.signup.bind(this)}  //_onPressRegister}
+            onPress={this._onPressRegister}
           />
 
-          <Text style={styles.errorLabel}>{this.state.errorMessage}</Text>
+          <Text style={styles.errorLabel}>{this.state.response}</Text>
 
           <TouchableHighlight
                               style={{justifyContent: 'center', alignItems: 'center'}}
@@ -290,9 +234,6 @@ export default class SignUp extends Component {
           >
             <Text style={styles.registeredLabel}>Already signed up?</Text>
           </TouchableHighlight>
-
-
-          <Text style={styles.errorLabel}>{this.state.response}</Text>
 
 
         </View>

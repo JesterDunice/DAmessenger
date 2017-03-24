@@ -43,7 +43,7 @@ export default class Login extends Component {
       connectLabel: 'CONNECT',
       userEmail: '',
       password: '',
-      errorMessage: '',
+      response: '',
       buttonDisabled: false,
     };
     this._onPressConnect = this._onPressConnect.bind(this);
@@ -57,7 +57,7 @@ export default class Login extends Component {
     //DismissKeyboard();
 
     try {
-      await firebase.auth().signInWithEmailAndPassword('t@t.tt','123456');//this.state.userEmail, this.state.password);
+      await firebase.auth().signInWithEmailAndPassword('W@w.ww', '123456');//this.state.userEmail, this.state.password); //'t@t.tt','123456');
 
       this.setState({
         response: "Logged In!"
@@ -222,7 +222,7 @@ export default class Login extends Component {
             onPress={this.login.bind(this)} //_onPressConnect}
           />
 
-          <Text style={styles.errorLabel}>{this.state.errorMessage}</Text>
+          <Text style={styles.errorLabel}>{this.state.response}</Text>
 
           <TouchableHighlight
             style={{justifyContent: 'center', alignItems: 'center'}}
