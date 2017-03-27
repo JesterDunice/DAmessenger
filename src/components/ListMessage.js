@@ -52,7 +52,6 @@ export default class ListMessage extends Component {
       maxWidth: 200,
       minWidth: 40,
       borderRadius: 20,
-      //borderBottomRightRadius: 20,
       borderWidth: 10,
       borderColor: this.state.message.name == this.props.userName ? '#13b8fa' : '#f2f2f2',
     }
@@ -130,7 +129,10 @@ export default class ListMessage extends Component {
               <View style={this._containerStyle()}>
                 {this._renderLeftArrow()}
               <View style={this._messageStyle()}>
-                <Text style={this._textStyle()}>{this.state.message.text}</Text>
+                /*<Text style={this._textStyle()}>{this.state.message.text}</Text>*/
+                <Image  style={{height: 100, width: 100}}
+                        source={{uri: this.state.message.text}}
+                />
               </View>
               {this._renderRightArrow()}
             </View>

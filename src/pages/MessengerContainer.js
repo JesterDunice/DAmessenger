@@ -57,7 +57,7 @@ export default class MessengerContainer extends Component {
 
   constructor(props) {
     super(props);
-    this._messagesRef = firebase.database().ref("messages2");
+    this._messagesRef = firebase.database().ref("messages");
     this._storageRef = firebase.storage().ref();
 
 
@@ -66,8 +66,8 @@ export default class MessengerContainer extends Component {
 
     this.state = {
       user: this.user,
-      userName: 'vasya', //this.user.displayName,
-      avatar: '',//this.user.photoURL,
+      userName: this.user.displayName,
+      avatar: this.user.photoURL,
       buttonDisabled: true,
       dataSource: new ListView.DataSource({
         rowHasChanged: (row1, row2) => row1 !== row2,
@@ -101,17 +101,10 @@ export default class MessengerContainer extends Component {
     });
   }
 
-
   _onPhoto() {
-    var _SELF = this;
-
     if (Platform.OS === 'android'){
-      sb.disableStateChange();
     }
-    ImagePicker.showImagePicker(ipOptions, (response) => {
-      if (Platform.OS === 'android'){
-        sb.enableStateChange();
-      }
+    ImagePicker.showImagePicker(options, (response) => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       }
@@ -122,12 +115,12 @@ export default class MessengerContainer extends Component {
         console.log('User tapped custom button: ', response.customButton);
       }
       else {
-        let source = {uri:response.uri};
+        let source = {uri: response.uri};
 
         if (response.name){
           source['name'] = response.fileName
         } else{
-          paths = response.uri.split("/")
+          paths = response.uri.split("/");
           source['name'] = paths[paths.length-1];
         }
 
@@ -135,39 +128,19 @@ export default class MessengerContainer extends Component {
           source['type'] = response.type;
         }
 
-        _SELF.state.channel.sendFileMessage(source, function(message, error){
-          if (error) {
-            console.log(error);
-            return;
-          }
-
-          var _messages = [];
-          _messages.push(message);
-          if (_SELF.state.lastMessage && message.createdAt - _SELF.state.lastMessage.createdAt  > (1000 * 60 * 60)) {
-            _messages.push({isDate: true, createdAt: message.createdAt});
-          }
-
-          var _newMessageList = _messages.concat(_SELF.state.messages);
-          _SELF.setState({
-            messages: _newMessageList,
-            dataSource: _SELF.state.dataSource.cloneWithRows(_newMessageList)
-          });
-          _SELF.state.lastMessage = message;
-          _SELF.state.channel.lastMessage = message;
+        this.setState({
+          avatarSource: response.uri,
+          avatarType: response.type
         });
-      };
 
+        this._uploadPhoto(this.state.avatarSource, this.state.avatarType);
+      }
     });
   }
 
-
   componentDidMount() {
-
-
     this._storageRef.child('avatars/default/avatar-default.png').getDownloadURL().then((res)=>{
-      console.log('123123',res);
       this.setState({defaultAvatar: res});
-      console.log('----->', this.state.defaultAvatar);
     });
 
     this.listenForItems(this._messagesRef);
@@ -179,11 +152,11 @@ export default class MessengerContainer extends Component {
     // });
     //
 
-    // let user = firebase.auth().currentUser;
-    // if (user != null) {
-    //    console.log("User UID: "+this.user.uid);
-    //    console.log("User Name: "+this.user.displayName);
-    //    console.log("User pURL: "+this.user.photoURL);}
+    let user = firebase.auth().currentUser;
+    if (user != null) {
+       console.log("User UID: "+this.user.uid);
+       console.log("User Name: "+this.user.displayName);
+       console.log("User pURL: "+this.user.photoURL);}
     //   user.providerData.forEach(function (profile) {
     //     console.log("Sign-in provider: "+profile.providerId);
     //     console.log("  Provider-specific UID: "+profile.uid);

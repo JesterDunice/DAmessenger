@@ -60,7 +60,6 @@ export default class SignUp extends Component {
     });
   }
 
-
   _onPressRegister() {
 
     Keyboard.dismiss();
@@ -136,12 +135,11 @@ export default class SignUp extends Component {
 
       user.updateProfile({
         displayName: this.state.userNickname,
-        photoURL: this.state.defaultAvatar,
       });
 
       setTimeout(() => {
         this.props.navigator.push({
-          name: "mesContainer"
+          name: "setAvatar"
         })
       }, 1500);
 

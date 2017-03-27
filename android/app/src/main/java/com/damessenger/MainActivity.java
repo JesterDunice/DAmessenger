@@ -1,6 +1,7 @@
 package com.damessenger;
 
 import com.facebook.react.ReactActivity;
+import com.RNFetchBlob.RNFetchBlobPackage;
 import com.imagepicker.ImagePickerPackage;
 
 public class MainActivity extends ReactActivity {
