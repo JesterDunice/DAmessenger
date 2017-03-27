@@ -92,7 +92,7 @@ export default class Main extends Component {
   render() {
     return (
       <Navigator
-        initialRoute={{name: 'setAvatar'}}
+        initialRoute={{name: 'signup'}}
         renderScene={this._renderScene}
         configureScene={() => {return Navigator.SceneConfigs.FloatFromRight;}}
         style={styles.container}

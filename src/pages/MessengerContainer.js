@@ -23,6 +23,7 @@ import * as firebase from 'firebase';
 import TopBar from '../components/topBar';
 import Button from '../components/button';
 import ListMessage from '../components/ListMessage';
+import RNFetchBlob from 'react-native-fetch-blob';
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -33,6 +34,13 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
+
+const fs = RNFetchBlob.fs;
+const Blob = RNFetchBlob.polyfill.Blob;
+window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest;
+window.Blob = Blob;
+
 
 //var GiftedMessenger = require('react-native-gifted-messenger');
 
@@ -73,7 +81,10 @@ export default class MessengerContainer extends Component {
         rowHasChanged: (row1, row2) => row1 !== row2,
       }),
       typingMessage: '',
+      imageMessage: '',
       defaultAvatar: '',
+      avatarSource: '',
+      avatarType: '',
     };
 
   }
@@ -85,9 +96,10 @@ export default class MessengerContainer extends Component {
       let messages = [];
       snap.forEach((child) => {
         messages.push({
+          image: child.val().image,
           text: child.val().text,
           name: child.val().name,
-          image: {uri: child.val().avatarUrl || this.state.defaultAvatar},
+          avatar: {uri: child.val().avatarUrl || this.state.defaultAvatar},
           position: child.val().name == this.state.userName && 'right' || 'left',
           date: new Date(child.val().date),
           uniqueId: child.key
@@ -102,6 +114,12 @@ export default class MessengerContainer extends Component {
   }
 
   _onPhoto() {
+    let options = {
+      title: 'Select Image File To Send',
+      mediaType: 'photo',
+      noData: false
+    };
+
     if (Platform.OS === 'android'){
     }
     ImagePicker.showImagePicker(options, (response) => {
@@ -135,6 +153,42 @@ export default class MessengerContainer extends Component {
 
         this._uploadPhoto(this.state.avatarSource, this.state.avatarType);
       }
+    });
+  }
+
+  _uploadPhoto(uri, mime) {
+    let user = firebase.auth().currentUser;
+    let userUID = user.uid;
+    new Promise((resolve, reject) => {
+      const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
+      const sessionId = new Date().getTime();
+      let uploadBlob = null;
+      const imageRef = this._storageRef.child('post-images/' + `/${userUID}/` + `${sessionId}`);
+
+      fs.readFile(uploadUri, 'base64')
+        .then((data) => {
+          return Blob.build(data, {type: `${mime};BASE64`})
+        })
+        .then((blob) => {
+          uploadBlob = blob;
+          return imageRef.put(blob, {contentType: mime})
+        })
+        .then(() => {
+          uploadBlob.close();
+          return imageRef.getDownloadURL()
+        })
+        .then((url) => {
+          resolve(url);
+        })
+        .catch((error) => {
+          reject(error);
+        })
+    }).then((res) => {
+      this.setState({
+        imageMessage: res
+      });
+      console.log('Эээээхэхэй!!!', this.state.imageMessage);
+      this.handleSend.bind(this);
     });
   }
 
@@ -177,6 +231,7 @@ export default class MessengerContainer extends Component {
 
   handleSend() {
     this._messagesRef.push({
+      image: this.state.imageMessage,
       text: this.state.typingMessage,
       name: this.state.userName,
       avatarUrl: this.state.avatar || this.state.defaultAvatar,

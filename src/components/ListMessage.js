@@ -68,14 +68,14 @@ export default class ListMessage extends Component {
   _renderImageLeft(){
     if (this.state.message.name != this.props.userName){
     return(
-      <Image style={{height: 30, width: 30, borderRadius: 15, marginLeft: 15, alignSelf: 'flex-end'}} source={this.state.message.image}/>
+      <Image style={{height: 30, width: 30, borderRadius: 15, marginLeft: 15, alignSelf: 'flex-end'}} source={this.state.message.avatar}/>
     );}
   }
 
   _renderImageRight(){
     if (this.state.message.name == this.props.userName){
       return(
-        <Image style={{height: 30, width: 30, borderRadius: 15, marginRight: 15, alignSelf: 'flex-end'}} source={this.state.message.image}/>
+        <Image style={{height: 30, width: 30, borderRadius: 15, marginRight: 15, alignSelf: 'flex-end'}} source={this.state.message.avatar}/>
       );}
   }
 
@@ -119,6 +119,24 @@ export default class ListMessage extends Component {
      );
    };
  }
+ _imageStyle(){
+   if (this.state.message.image === '') {
+     this.setState({
+       message: {
+         image: require('../img/btn-add.png')
+       }
+     });
+     return {
+       height: 50,
+       width: 50,
+     }
+   } else {
+     return {
+       height: 180,
+       width: 180,
+     }
+   }
+ }
 
   render() {
     return (
@@ -129,10 +147,10 @@ export default class ListMessage extends Component {
               <View style={this._containerStyle()}>
                 {this._renderLeftArrow()}
               <View style={this._messageStyle()}>
-                /*<Text style={this._textStyle()}>{this.state.message.text}</Text>*/
-                <Image  style={{height: 100, width: 100}}
-                        source={{uri: this.state.message.text}}
+                <Image  style={this._imageStyle()}
+                        source={{uri: this.state.message.image}}
                 />
+                <Text style={this._textStyle()}>{this.state.message.text}</Text>
               </View>
               {this._renderRightArrow()}
             </View>
